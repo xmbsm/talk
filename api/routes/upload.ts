@@ -1,20 +1,8 @@
 import { Router, type Response } from 'express'
-import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
 import { authMiddleware, type AuthRequest } from '../lib/auth.js'
+import { uploadToCos, deleteFromCos } from '../lib/cos.js'
 
 const router = Router()
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const uploadsDir = path.join(__dirname, '..', '..', 'uploads')
-
-// 确保 uploads 目录存在
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true })
-}
 
 // 允许的图片类型
 const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -24,53 +12,61 @@ const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
 function generateFilename(ext: string): string {
   const timestamp = Date.now()
   const random = Math.floor(Math.random() * 10000)
-  return `${timestamp}-${random}${ext}`
+  return `uploads/${timestamp}-${random}${ext}`
 }
 
 // 获取文件扩展名
 function getExtension(filename: string): string {
-  return path.extname(filename).toLowerCase()
+  return filename.split('.').pop()?.toLowerCase()?.replace(/[^a-z]/g, '') || '.jpg'
 }
-
-// multer 配置
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir)
-  },
-  filename: (_req, file, cb) => {
-    const ext = getExtension(file.originalname)
-    cb(null, generateFilename(ext))
-  },
-})
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  fileFilter: (_req, file, cb) => {
-    const ext = getExtension(file.originalname)
-    if (ALLOWED_MIMES.includes(file.mimetype) && ALLOWED_EXTENSIONS.includes(ext)) {
-      cb(null, true)
-    } else {
-      cb(new Error('仅支持 jpg/jpeg/png/gif/webp 格式的图片'))
-    }
-  },
-})
 
 /**
  * POST /api/upload - 上传图片
  */
-router.post('/', upload.single('file'), async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.file) {
+    const contentType = req.headers['content-type'] || ''
+
+    // 解析 multipart/form-data
+    if (!contentType.includes('multipart/form-data')) {
+      res.status(400).json({ success: false, error: '请使用 multipart/form-data 格式' })
+      return
+    }
+
+    // 手动解析 multipart 数据（EdgeOne Node Functions 不支持 multer）
+    const chunks: Buffer[] = []
+    for await (const chunk of req) {
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+    }
+    const rawBody = Buffer.concat(chunks)
+    const boundary = contentType.split('boundary=')[1]
+    if (!boundary) {
+      res.status(400).json({ success: false, error: '无效的表单数据' })
+      return
+    }
+
+    const parts = parseMultipart(rawBody, boundary)
+    const filePart = parts.find((p) => p.filename)
+
+    if (!filePart) {
       res.status(400).json({ success: false, error: '请选择要上传的图片' })
       return
     }
 
+    const ext = getExtension(filePart.filename)
+    if (!ALLOWED_EXTENSIONS.includes(`.${ext}`)) {
+      res.status(400).json({ success: false, error: '仅支持 jpg/jpeg/png/gif/webp 格式的图片' })
+      return
+    }
+
+    const filename = generateFilename(`.${ext}`)
+    const result = await uploadToCos(filename, filePart.data)
+
     res.status(201).json({
       success: true,
       data: {
-        filename: req.file.filename,
-        url: `/uploads/${req.file.filename}`,
+        filename: result.filename,
+        url: result.url,
       },
     })
   } catch (error) {
@@ -80,7 +76,7 @@ router.post('/', upload.single('file'), async (req: AuthRequest, res: Response):
 })
 
 /**
- * POST /api/upload/remote - 获取远程图片并保存
+ * POST /api/upload/remote - 获取远程图片并保存到 COS
  */
 router.post('/remote', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -118,28 +114,26 @@ router.post('/remote', async (req: AuthRequest, res: Response): Promise<void> =>
     // 验证是否为图片
     const contentType = resp.headers.get('content-type') || ''
     const isImage = ALLOWED_MIMES.some((mime) => contentType.includes(mime))
-
-    // 从 URL 获取扩展名
     const urlExt = getExtension(parsedUrl.pathname)
-    const isValidExt = ALLOWED_EXTENSIONS.includes(urlExt)
+    const isValidExt = ALLOWED_EXTENSIONS.includes(`.${urlExt}`)
 
     if (!isImage && !isValidExt) {
       res.status(400).json({ success: false, error: '远程文件不是有效的图片' })
       return
     }
 
-    const ext = isValidExt ? urlExt : '.jpg'
-    const filename = generateFilename(ext)
-    const filepath = path.join(uploadsDir, filename)
-
+    const ext = isValidExt ? urlExt : 'jpg'
+    const filename = generateFilename(`.${ext}`)
     const arrayBuffer = await resp.arrayBuffer()
-    fs.writeFileSync(filepath, Buffer.from(arrayBuffer))
+    const buffer = Buffer.from(arrayBuffer)
+
+    const result = await uploadToCos(filename, buffer)
 
     res.status(201).json({
       success: true,
       data: {
-        filename,
-        url: `/uploads/${filename}`,
+        filename: result.filename,
+        url: result.url,
       },
     })
   } catch (error) {
@@ -161,19 +155,65 @@ router.delete('/:filename', authMiddleware, async (req: AuthRequest, res: Respon
       return
     }
 
-    const filepath = path.join(uploadsDir, filename)
-
-    if (!fs.existsSync(filepath)) {
-      res.status(404).json({ success: false, error: '文件不存在' })
-      return
-    }
-
-    fs.unlinkSync(filepath)
+    await deleteFromCos(`uploads/${filename}`)
     res.json({ success: true, message: '删除成功' })
   } catch (error) {
     console.error('删除图片失败:', error)
     res.status(500).json({ success: false, error: '删除图片失败' })
   }
 })
+
+/**
+ * 简易 multipart 解析器
+ */
+interface MultipartPart {
+  name: string
+  filename?: string
+  data: Buffer
+  contentType?: string
+}
+
+function parseMultipart(body: Buffer, boundary: string): MultipartPart[] {
+  const parts: MultipartPart[] = []
+  const delimiter = Buffer.from(`--${boundary}`)
+  const endDelimiter = Buffer.from(`--${boundary}--`)
+
+  let start = 0
+  while (start < body.length) {
+    const delimIdx = body.indexOf(delimiter, start)
+    if (delimIdx === -1) break
+
+    const partStart = delimIdx + delimiter.length + 2 // skip \r\n
+    const nextDelimIdx = body.indexOf(delimiter, partStart)
+    if (nextDelimIdx === -1) break
+
+    const partData = body.slice(partStart, nextDelimIdx - 2) // remove trailing \r\n
+    const headerEndIdx = partData.indexOf('\r\n\r\n')
+    if (headerEndIdx === -1) {
+      start = nextDelimIdx
+      continue
+    }
+
+    const headerStr = partData.slice(0, headerEndIdx).toString('utf-8')
+    const data = partData.slice(headerEndIdx + 4)
+
+    const nameMatch = headerStr.match(/name="([^"]+)"/)
+    const filenameMatch = headerStr.match(/filename="([^"]+)"/)
+    const ctMatch = headerStr.match(/Content-Type:\s*(.+)/i)
+
+    if (nameMatch) {
+      parts.push({
+        name: nameMatch[1],
+        filename: filenameMatch?.[1],
+        data: data.length > 2 ? data.slice(0, -2) : data, // remove trailing \r\n
+        contentType: ctMatch?.[1]?.trim(),
+      })
+    }
+
+    start = nextDelimIdx
+  }
+
+  return parts
+}
 
 export default router

@@ -35,8 +35,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/upload', uploadRoutes)
 
-// 静态文件服务 - 上传目录
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
+// 图片由腾讯云 COS 提供，不再需要本地静态文件服务
 
 /**
  * health

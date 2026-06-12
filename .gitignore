@@ -24,3 +24,12 @@ dist-ssr
 *.sw?
 .vite
 /generated/prisma
+
+# Prisma
+prisma/dev.db
+
+# Uploads (now using COS)
+uploads/
+
+# Environment
+.env
