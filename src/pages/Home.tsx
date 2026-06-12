@@ -5,12 +5,14 @@ import MessageForm from '@/components/MessageForm'
 import MessageList from '@/components/MessageList'
 import Sidebar from '@/components/Sidebar'
 import BackToTop from '@/components/BackToTop'
+import { useStore } from '@/store'
 
 const recommendLinks = ['哈哈', '文艺社区', '一言', '摄影', '手机壁纸']
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams()
   const so = searchParams.get('so') || ''
+  const { token, clearAuth } = useStore()
 
   const handlePostSuccess = () => {
     window.dispatchEvent(new CustomEvent('message-posted'))
@@ -75,7 +77,11 @@ export default function Home() {
             <a href="https://xinwenyi.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-accent transition-all duration-300">关于</a>
             <a href="https://xinwenyi.com/yiyan.php" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-accent transition-all duration-300">一言</a>
             <a href="#" className="text-sm text-muted hover:text-accent transition-all duration-300">联系</a>
-            <Link to="/login" className="text-sm text-muted hover:text-accent transition-all duration-300">管理</Link>
+            {token ? (
+              <button onClick={clearAuth} className="text-sm text-muted hover:text-accent transition-all duration-300">退出管理</button>
+            ) : (
+              <Link to="/login" className="text-sm text-muted hover:text-accent transition-all duration-300">管理</Link>
+            )}
           </div>
           <p className="text-xs text-text-light">Copyright © 新文艺. All Rights Reserved.</p>
         </div>

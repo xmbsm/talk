@@ -204,7 +204,7 @@ export default function MessageCard({ message, floor, onRefresh }: Props) {
 
           {/* Floor number - bottom right */}
           <span
-            className="text-[#e9e9e9] select-none font-sans absolute right-5 bottom-4"
+            className="text-[#f0f0f0] select-none font-sans absolute right-5 bottom-4"
             style={{ fontSize: '36px', lineHeight: '1' }}
           >
             {floor}

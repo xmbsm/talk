@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Lock, User } from 'lucide-react'
 import { authApi } from '@/lib/api'
 import { useStore } from '@/store'
@@ -36,7 +36,11 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-4">
+    <div className="min-h-screen bg-surface flex flex-col px-4">
+      <Link to="/" className="inline-block mt-6 ml-6 hover:opacity-70 transition-all duration-300">
+        <img src="/images/logo.svg" alt="新文艺" className="h-[40px] w-auto" />
+      </Link>
+      <div className="flex-1 flex items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-text-main" style={{ fontFamily: '"BrandonText-Black", "PingFang SC", sans-serif' }}>
@@ -44,7 +48,7 @@ export default function Login() {
           </h1>
           <p className="text-sm text-muted mt-2">新文艺 · 理想生活杂志</p>
         </div>
-        <form onSubmit={handleSubmit} className="bg-white rounded-pill shadow-card p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white rounded-pill p-8 space-y-5">
           {error && (
             <div className="bg-red-50 text-red-600 text-sm rounded-[10px] px-4 py-3">{error}</div>
           )}
@@ -76,6 +80,7 @@ export default function Login() {
             {loading ? '登录中...' : '登 录'}
           </button>
         </form>
+      </div>
       </div>
     </div>
   )

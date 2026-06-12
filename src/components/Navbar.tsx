@@ -1,16 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { MessageSquare, BookOpen } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useStore } from '@/store'
 
 export default function Navbar() {
-  const { token, adminName, clearAuth } = useStore()
-  const navigate = useNavigate()
-
-  const handleLogout = () => {
-    clearAuth()
-    navigate('/')
-  }
-
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 h-[90px] flex items-center"
@@ -38,17 +29,6 @@ export default function Navbar() {
           >
             <img src="/images/blog.svg" alt="一言" className="w-[28px] h-[28px]" />
           </Link>
-          {token && (
-            <>
-              <span className="text-xs text-muted">管理员: {adminName}</span>
-              <button
-                onClick={handleLogout}
-                className="text-xs text-muted hover:text-red-500 transition-all duration-300"
-              >
-                退出
-              </button>
-            </>
-          )}
         </div>
       </div>
     </nav>
