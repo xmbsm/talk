@@ -7,9 +7,12 @@ import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'xinwenyi-talk-secret-key'
 
-// pg 连接池单例
+// pg 连接池单例（PgBouncer 兼容：禁用 prepared statements）
 const globalForPg = globalThis as unknown as { pool: pg.Pool }
-export const pool: pg.Pool = globalForPg.pool || new pg.Pool({ connectionString: process.env.DATABASE_URL })
+export const pool: pg.Pool = globalForPg.pool || new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  prepare: false,
+})
 if (process.env.NODE_ENV !== 'production') globalForPg.pool = pool
 
 // JWT 工具
