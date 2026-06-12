@@ -3,6 +3,8 @@
  * 部署后访问一次，排查完毕后删除此文件
  */
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 
 export async function onRequestGet() {
   const results: Record<string, unknown> = {}
@@ -19,7 +21,10 @@ export async function onRequestGet() {
 
   // 2. 测试数据库连接
   try {
-    const prisma = new PrismaClient()
+    const connectionString = process.env.DATABASE_URL!
+    const pool = new pg.Pool({ connectionString })
+    const adapter = new PrismaPg(pool)
+    const prisma = new PrismaClient({ adapter })
     const adminCount = await prisma.admin.count()
     const messageCount = await prisma.message.count()
     await prisma.$disconnect()

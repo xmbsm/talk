@@ -1,18 +1,23 @@
 /**
  * POST /api/setup - 初始化管理员账号（仅首次部署使用）
- * 请先在本地运行 npx prisma db push --schema=prisma/schema.prisma 建表
+ * 请先在 Supabase SQL Editor 中建表
  * 然后调用此接口创建管理员
  *
  * 请求体: { "username": "admin", "password": "your-password" }
  * 不传则默认 admin / admin123
  */
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 import bcrypt from 'bcryptjs'
 import { json } from '../_lib.js'
 
 export async function onRequestPost(context: { request: Request }) {
   try {
-    const prisma = new PrismaClient()
+    const connectionString = process.env.DATABASE_URL!
+    const pool = new pg.Pool({ connectionString })
+    const adapter = new PrismaPg(pool)
+    const prisma = new PrismaClient({ adapter })
 
     let username = 'admin'
     let password = 'admin123'
