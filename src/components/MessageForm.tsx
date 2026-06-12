@@ -251,8 +251,8 @@ export default function MessageForm({ onSuccess }: Props) {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="bg-primary text-white rounded-pill hover:bg-[#777] transition-all duration-300 disabled:opacity-50 font-bold"
-            style={{ width: '100px', height: '40px', fontSize: '14px' }}
+            className="bg-primary text-white rounded-pill hover:bg-[#777] transition-all duration-300 disabled:opacity-50 font-bold w-16 sm:w-[100px]"
+            style={{ height: '40px', fontSize: '14px' }}
           >
             {submitting ? '发送中' : '发 布'}
           </button>
