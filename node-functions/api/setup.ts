@@ -33,7 +33,7 @@ export async function onRequestPost(context: { request: Request }) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
     await pool.query(
-      'INSERT INTO "Admin" (username, password, "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())',
+      'INSERT INTO "Admin" (username, password, "createdAt") VALUES ($1, $2, NOW())',
       [username, hashedPassword]
     )
 

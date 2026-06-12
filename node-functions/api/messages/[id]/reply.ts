@@ -24,7 +24,7 @@ export async function onRequestPut(context: { request: Request; params: { id: st
     }
 
     const result = await pool.query(
-      'UPDATE "Message" SET reply = $1, replytime = NOW(), "updatedAt" = NOW() WHERE id = $2 RETURNING *',
+      'UPDATE "Message" SET reply = $1, replytime = NOW() WHERE id = $2 RETURNING *',
       [reply.trim(), id]
     )
 

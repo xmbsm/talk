@@ -82,7 +82,7 @@ export async function onRequestPost(context: { request: Request }) {
     }
 
     const result = await pool.query(
-      'INSERT INTO "Message" (username, content, img, dream, ip, "ipLocation", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING *',
+      'INSERT INTO "Message" (username, content, img, dream, ip, "ipLocation", posttime) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *',
       [username.trim(), sanitized.trim(), img || '', '', ip, location]
     )
 
