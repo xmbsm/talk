@@ -5,7 +5,7 @@ export default function Announcement() {
         {/* Left - admin avatar */}
         <div className="w-[80px] flex-shrink-0">
           <img
-            src="/images/v8/g.jpg"
+            src="/images/g.jpg"
             alt="管理员"
             className="w-[52px] h-[52px] rounded-full object-cover"
           />

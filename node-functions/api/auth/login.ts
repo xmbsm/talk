@@ -2,7 +2,7 @@
  * POST /api/auth/login - 管理员登录
  */
 import bcrypt from 'bcryptjs'
-import { prisma, json, generateToken, parseBody } from '../_lib.js'
+import { prisma, json, generateToken, parseBody } from '../../_lib.js'
 
 export async function onRequestPost(context: { request: Request }) {
   try {

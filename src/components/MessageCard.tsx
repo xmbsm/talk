@@ -84,7 +84,7 @@ export default function MessageCard({ message, floor, onRefresh }: Props) {
           <div className="w-[80px] flex-shrink-0">
             <div className="relative group">
               <img
-                src={`/images/v8/user_0${avatarIndex}.jpg`}
+                src={`/images/user_0${avatarIndex}.jpg`}
                 alt={message.username}
                 className="w-[52px] h-[52px] rounded-full object-cover"
               />

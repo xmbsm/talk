@@ -28,7 +28,7 @@ export default function BackToTop() {
       }}
       aria-label="回到顶部"
     >
-      <img src="/images/v8/up_2.svg" alt="回到顶部" className="w-[28px] h-[28px]" />
+      <img src="/images/up_2.svg" alt="回到顶部" className="w-[28px] h-[28px]" />
     </button>
   )
 }

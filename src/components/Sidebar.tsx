@@ -127,9 +127,9 @@ export default function Sidebar({ onSearch, searchKeyword, searchCount, onClearS
           关注乔同学微信公众号
         </div>
         <div className="p-4 flex flex-col items-center">
-          <img src="/images/v8/wechat_wk.svg" alt="微信二维码" className="w-[170px] h-[170px]" />
+          <img src="/images/wechat_wk.svg" alt="微信二维码" className="w-[170px] h-[170px]" />
           <p className="text-xs text-muted mt-2 flex items-center gap-1">
-            <img src="/images/v8/wechat_logo.svg" alt="" className="w-[18px] h-[18px]" />
+            <img src="/images/wechat_logo.svg" alt="" className="w-[18px] h-[18px]" />
             搜索公众号：乔同学
           </p>
         </div>
@@ -144,9 +144,9 @@ export default function Sidebar({ onSearch, searchKeyword, searchCount, onClearS
           推荐小程序
         </div>
         <div className="p-4 flex flex-col items-center">
-          <img src="/images/v8/wechat_xcx.svg" alt="小程序二维码" className="w-[170px] h-[170px]" />
+          <img src="/images/wechat_xcx.svg" alt="小程序二维码" className="w-[170px] h-[170px]" />
           <p className="text-xs text-muted mt-2 flex items-center gap-1">
-            <img src="/images/v8/xcx_logo.svg" alt="" className="w-[18px] h-[18px]" />
+            <img src="/images/xcx_logo.svg" alt="" className="w-[18px] h-[18px]" />
             搜索小程序：小酷壁纸
           </p>
         </div>
@@ -169,7 +169,7 @@ export default function Sidebar({ onSearch, searchKeyword, searchCount, onClearS
         onMouseLeave={() => setShowDashang(false)}
       >
         <div className="flex items-center justify-center gap-2 cursor-pointer">
-          <img src="/images/v8/dashang.png" alt="" className="w-[29px] h-[24px]" />
+          <img src="/images/dashang.png" alt="" className="w-[29px] h-[24px]" />
           <span className="text-sm font-medium text-text-main">感谢赞赏！</span>
         </div>
         {showDashang && (
@@ -177,7 +177,7 @@ export default function Sidebar({ onSearch, searchKeyword, searchCount, onClearS
             className="fixed z-[100] bg-white rounded-lg p-2 shadow-[0_4px_20px_rgba(0,0,0,0.12)]"
             style={{ top: dashangPos.top, left: dashangPos.left }}
           >
-            <img src="/images/v8/code2.jpg" alt="赞赏码" className="w-[200px] h-[200px] rounded-lg" />
+            <img src="/images/code2.jpg" alt="赞赏码" className="w-[200px] h-[200px] rounded-lg" />
           </div>
         )}
       </div>

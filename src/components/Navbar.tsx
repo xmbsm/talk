@@ -22,7 +22,7 @@ export default function Navbar() {
     >
       <div className="w-full max-w-[1600px] mx-auto px-6 flex items-center justify-between">
         <Link to="/" className="block h-[40px]">
-          <img src="/images/v8/logo.svg" alt="新文艺" className="h-[40px] w-auto" />
+          <img src="/images/logo.svg" alt="新文艺" className="h-[40px] w-auto" />
         </Link>
 
         <div className="flex items-center gap-8">
@@ -30,13 +30,13 @@ export default function Navbar() {
             to="/"
             className="flex items-center gap-1 text-sm text-text-link hover:text-text-main transition-all duration-300"
           >
-            <img src="/images/v8/message.svg" alt="留言" className="w-[28px] h-[28px]" />
+            <img src="/images/message.svg" alt="留言" className="w-[28px] h-[28px]" />
           </Link>
           <Link
             to="/yiyan"
             className="flex items-center gap-1 text-sm text-text-link hover:text-text-main transition-all duration-300"
           >
-            <img src="/images/v8/blog.svg" alt="一言" className="w-[28px] h-[28px]" />
+            <img src="/images/blog.svg" alt="一言" className="w-[28px] h-[28px]" />
           </Link>
           {token && (
             <>

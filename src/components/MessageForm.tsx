@@ -225,7 +225,7 @@ export default function MessageForm({ onSuccess }: Props) {
             className={`emoji-trigger p-1.5 rounded-full transition-all duration-300 ${showEmoji ? 'opacity-60' : 'hover:opacity-60'}`}
             title="加入表情"
           >
-            <img src="/images/v8/emoji.svg" alt="表情" className="w-[20px] h-[20px]" />
+            <img src="/images/emoji.svg" alt="表情" className="w-[20px] h-[20px]" />
           </button>
           <button
             ref={imgBtnRef}
@@ -233,11 +233,11 @@ export default function MessageForm({ onSuccess }: Props) {
             className={`image-trigger p-1.5 rounded-full transition-all duration-300 ${showImagePanel ? 'opacity-60' : 'hover:opacity-60'}`}
             title="添加图片"
           >
-            <img src="/images/v8/icon_img.svg" alt="图片" className="w-[20px] h-[20px]" />
+            <img src="/images/icon_img.svg" alt="图片" className="w-[20px] h-[20px]" />
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative flex items-center bg-input-bg rounded-pill" style={{ paddingLeft: '40px', backgroundImage: 'url(/images/v8/user.svg)', backgroundRepeat: 'no-repeat', backgroundSize: '14px 16px', backgroundPosition: '18px center' }}>
+          <div className="relative flex items-center bg-input-bg rounded-pill" style={{ paddingLeft: '40px', backgroundImage: 'url(/images/user.svg)', backgroundRepeat: 'no-repeat', backgroundSize: '14px 16px', backgroundPosition: '18px center' }}>
             <input
               type="text"
               value={username}
