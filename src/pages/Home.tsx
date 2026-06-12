@@ -71,13 +71,10 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-8 text-center bg-[#FAFAFA]">
         <div className="max-w-[1600px] mx-auto px-6">
-          <div className="flex items-center justify-center gap-4 mb-3">
+          <div className="flex items-center justify-center gap-8 mb-3">
             <a href="https://xinwenyi.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-accent transition-all duration-300">关于</a>
-            <span className="text-text-light">|</span>
             <a href="https://xinwenyi.com/yiyan.php" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-accent transition-all duration-300">一言</a>
-            <span className="text-text-light">|</span>
             <a href="#" className="text-sm text-muted hover:text-accent transition-all duration-300">联系</a>
-            <span className="text-text-light">|</span>
             <Link to="/login" className="text-sm text-muted hover:text-accent transition-all duration-300">管理</Link>
           </div>
           <p className="text-xs text-text-light">Copyright © 新文艺. All Rights Reserved.</p>
