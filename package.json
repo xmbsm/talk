@@ -5,15 +5,15 @@
   "type": "module",
   "scripts": {
     "client:dev": "vite",
-    "build": "npx prisma generate --schema=prisma/schema.prisma && vite build",
+    "build": "npx prisma generate && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "server:dev": "nodemon",
     "dev": "concurrently \"npm run client:dev\" \"npm run server:dev\"",
-    "dev:setup": "npx prisma generate --schema=prisma/schema.sqlite.prisma",
+    "dev:setup": "$env:PRISMA_SCHEMA=\"prisma/schema.sqlite.prisma\"; npx prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "npx prisma generate --schema=prisma/schema.prisma"
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",

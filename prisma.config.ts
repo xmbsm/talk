@@ -1,11 +1,11 @@
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 
-// 本地开发用 SQLite schema，线上部署用 PostgreSQL schema
-const isProduction = process.env.NODE_ENV === "production";
+// 默认用 PostgreSQL schema（线上部署），本地开发设置 PRISMA_SCHEMA=prisma/schema.sqlite.prisma
+const schema = process.env.PRISMA_SCHEMA || "prisma/schema.prisma";
 
 export default defineConfig({
-  schema: isProduction ? "prisma/schema.prisma" : "prisma/schema.sqlite.prisma",
+  schema,
   migrations: {
     path: "prisma/migrations",
   },
