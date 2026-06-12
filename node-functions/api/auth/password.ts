@@ -2,7 +2,7 @@
  * PUT /api/auth/password - 修改密码
  */
 import bcrypt from 'bcryptjs'
-import { prisma, json, requireAuth, parseBody } from '../../_lib.js'
+import { pool, json, requireAuth, parseBody } from '../../_lib.js'
 
 export async function onRequestPut(context: { request: Request }) {
   try {
@@ -19,7 +19,8 @@ export async function onRequestPut(context: { request: Request }) {
       return json({ success: false, error: '新密码长度不能少于6位' }, 400)
     }
 
-    const admin = await prisma.admin.findUnique({ where: { username: auth.username } })
+    const result = await pool.query('SELECT * FROM "Admin" WHERE username = $1', [auth.username])
+    const admin = result.rows[0]
     if (!admin) {
       return json({ success: false, error: '管理员不存在' }, 404)
     }
@@ -30,10 +31,7 @@ export async function onRequestPut(context: { request: Request }) {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await prisma.admin.update({
-      where: { username: auth.username },
-      data: { password: hashedPassword },
-    })
+    await pool.query('UPDATE "Admin" SET password = $1 WHERE username = $2', [hashedPassword, auth.username])
 
     return json({ success: true, message: '密码修改成功' })
   } catch (error) {

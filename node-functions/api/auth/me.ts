@@ -1,14 +1,15 @@
 /**
  * GET /api/auth/me - 获取当前管理员信息
  */
-import { prisma, json, requireAuth } from '../../_lib.js'
+import { pool, json, requireAuth } from '../../_lib.js'
 
 export async function onRequestGet(context: { request: Request }) {
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
 
-    const admin = await prisma.admin.findUnique({ where: { username: auth.username } })
+    const result = await pool.query('SELECT username FROM "Admin" WHERE username = $1', [auth.username])
+    const admin = result.rows[0]
     if (!admin) {
       return json({ success: false, error: '管理员不存在' }, 404)
     }

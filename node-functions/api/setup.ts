@@ -6,19 +6,11 @@
  * 请求体: { "username": "admin", "password": "your-password" }
  * 不传则默认 admin / admin123
  */
-import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import pg from 'pg'
+import { pool, json } from '../_lib.js'
 import bcrypt from 'bcryptjs'
-import { json } from '../_lib.js'
 
 export async function onRequestPost(context: { request: Request }) {
   try {
-    const connectionString = process.env.DATABASE_URL!
-    const pool = new pg.Pool({ connectionString })
-    const adapter = new PrismaPg(pool)
-    const prisma = new PrismaClient({ adapter })
-
     let username = 'admin'
     let password = 'admin123'
 
@@ -31,22 +23,20 @@ export async function onRequestPost(context: { request: Request }) {
     }
 
     if (password.length < 6) {
-      await prisma.$disconnect()
       return json({ success: false, error: '密码长度不能少于6位' }, 400)
     }
 
-    const existing = await prisma.admin.findUnique({ where: { username } })
-    if (existing) {
-      await prisma.$disconnect()
+    const existing = await pool.query('SELECT username FROM "Admin" WHERE username = $1', [username])
+    if (existing.rows.length > 0) {
       return json({ success: true, message: '管理员已存在，无需初始化' })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    await prisma.admin.create({
-      data: { username, password: hashedPassword },
-    })
+    await pool.query(
+      'INSERT INTO "Admin" (username, password, "createdAt", "updatedAt") VALUES ($1, $2, NOW(), NOW())',
+      [username, hashedPassword]
+    )
 
-    await prisma.$disconnect()
     return json({
       success: true,
       message: `初始化成功！管理员: ${username}`,

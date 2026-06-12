@@ -9,7 +9,7 @@ interface Props {
 
 function getCookie(name: string): string {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
-  return match ? match[2] : ''
+  return match ? decodeURIComponent(match[2]) : ''
 }
 
 function setCookie(name: string, value: string, days = 365) {

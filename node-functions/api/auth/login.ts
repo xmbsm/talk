@@ -2,7 +2,7 @@
  * POST /api/auth/login - 管理员登录
  */
 import bcrypt from 'bcryptjs'
-import { prisma, json, generateToken, parseBody } from '../../_lib.js'
+import { pool, json, generateToken, parseBody } from '../../_lib.js'
 
 export async function onRequestPost(context: { request: Request }) {
   try {
@@ -12,7 +12,8 @@ export async function onRequestPost(context: { request: Request }) {
       return json({ success: false, error: '用户名和密码不能为空' }, 400)
     }
 
-    const admin = await prisma.admin.findUnique({ where: { username } })
+    const result = await pool.query('SELECT * FROM "Admin" WHERE username = $1', [username])
+    const admin = result.rows[0]
     if (!admin) {
       return json({ success: false, error: '用户名或密码错误' }, 401)
     }

@@ -2,9 +2,7 @@
  * GET /api/debug - 诊断接口，排查数据库连接问题
  * 部署后访问一次，排查完毕后删除此文件
  */
-import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import pg from 'pg'
+import { pool, json } from '../_lib.js'
 
 export async function onRequestGet() {
   const results: Record<string, unknown> = {}
@@ -21,17 +19,12 @@ export async function onRequestGet() {
 
   // 2. 测试数据库连接
   try {
-    const connectionString = process.env.DATABASE_URL!
-    const pool = new pg.Pool({ connectionString })
-    const adapter = new PrismaPg(pool)
-    const prisma = new PrismaClient({ adapter })
-    const adminCount = await prisma.admin.count()
-    const messageCount = await prisma.message.count()
-    await prisma.$disconnect()
+    const adminResult = await pool.query('SELECT COUNT(*)::int AS count FROM "Admin"')
+    const messageResult = await pool.query('SELECT COUNT(*)::int AS count FROM "Message"')
     results.database = {
       connected: true,
-      adminCount,
-      messageCount,
+      adminCount: adminResult.rows[0].count,
+      messageCount: messageResult.rows[0].count,
     }
   } catch (error: unknown) {
     results.database = {
@@ -40,7 +33,5 @@ export async function onRequestGet() {
     }
   }
 
-  return new Response(JSON.stringify(results, null, 2), {
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  })
+  return json(results)
 }
