@@ -39,7 +39,7 @@ export const messagesApi = {
   list: async (page = 1, limit = 50, so = ''): Promise<ApiResponse<Message[]>> => {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
     if (so) params.set('so', so)
-    const res = await fetch(`${BASE}/messages?${params}`)
+    const res = await fetch(`${BASE}/messages?${params}`, { cache: 'no-store' })
     return res.json()
   },
 
@@ -131,6 +131,7 @@ export const authApi = {
   me: async (): Promise<ApiResponse<{ username: string }>> => {
     const res = await fetch(`${BASE}/auth/me`, {
       headers: getHeaders(),
+      cache: 'no-store',
     })
     return res.json()
   },
