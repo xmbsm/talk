@@ -120,10 +120,7 @@ export default function Sidebar({ onSearch, searchKeyword, searchCount, onClearS
 
       {/* WeChat section */}
       <div className="bg-white rounded-card overflow-hidden">
-        <div
-          className="px-4 py-2.5 text-white text-sm font-medium rounded-t-card"
-          style={{ background: 'linear-gradient(to right, #555, #222)' }}
-        >关注乔同学微信公众号</div>
+        <div className="px-4 py-2.5 text-sm font-bold text-text-main rounded-t-card">关注乔同学微信公众号</div>
         <div className="p-4 flex flex-col items-center">
           <img src="/images/wechat_wk.svg" alt="微信二维码" className="w-[170px] h-[170px]" />
           <p className="text-xs text-muted mt-2 flex items-center gap-1">
@@ -135,10 +132,7 @@ export default function Sidebar({ onSearch, searchKeyword, searchCount, onClearS
 
       {/* Mini program section */}
       <div className="bg-white rounded-card overflow-hidden">
-        <div
-          className="px-4 py-2.5 text-white text-sm font-medium rounded-t-card"
-          style={{ background: 'linear-gradient(to right, #555, #222)' }}
-        >
+        <div className="px-4 py-2.5 text-sm font-bold text-text-main rounded-t-card">
           推荐小程序
         </div>
         <div className="p-4 flex flex-col items-center">

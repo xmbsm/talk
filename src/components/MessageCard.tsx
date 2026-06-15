@@ -79,31 +79,37 @@ export default function MessageCard({ message, floor, onRefresh }: Props) {
   return (
     <>
       <div className="message-card bg-white rounded-card pt-[25px] px-5 pb-[30px] hover:shadow-[0_0_12px_rgba(0,0,0,0.03)] transition-all duration-300 relative">
-        <div className="flex">
-          {/* Left column - avatar */}
-          <div className="w-[80px] flex-shrink-0">
+        <div className="flex flex-col sm:flex-row">
+          {/* Avatar */}
+          <div className="flex items-center gap-2 sm:w-[80px] sm:flex-shrink-0 sm:block">
             <div className="relative group">
               <img
                 src={`/images/user_0${avatarIndex}.jpg`}
                 alt={message.username}
-                className="w-[52px] h-[52px] rounded-full object-cover"
+                className="w-[40px] h-[40px] sm:w-[52px] sm:h-[52px] rounded-full object-cover"
               />
               <Link
                 to={`/?so=${encodeURIComponent(message.username)}`}
-                className="absolute inset-0 w-[52px] h-[52px] rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                className="absolute inset-0 w-[40px] h-[40px] sm:w-[52px] sm:h-[52px] rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
               >
                 <span className="text-white text-xs">只看此人</span>
               </Link>
             </div>
+            <Link
+              to={`/?so=${encodeURIComponent(message.username)}`}
+              className="text-sm text-muted hover:text-accent transition-all duration-300 sm:hidden"
+            >
+              {message.username}
+            </Link>
           </div>
 
-          {/* Right column */}
-          <div className="flex-1 min-w-0">
+          {/* Content */}
+          <div className="flex-1 min-w-0 mt-2 sm:mt-0">
             {/* Username + Content */}
             <div>
               <Link
                 to={`/?so=${encodeURIComponent(message.username)}`}
-                className="text-sm text-muted hover:text-accent transition-all duration-300"
+                className="text-sm text-muted hover:text-accent transition-all duration-300 hidden sm:inline"
               >
                 {message.username}
               </Link>
@@ -130,8 +136,8 @@ export default function MessageCard({ message, floor, onRefresh }: Props) {
             {/* Admin Reply */}
             {message.reply && (
               <div className="mt-3 bg-[#f5f5f5] rounded-[10px] p-3">
-                <div className="flex items-start gap-2">
-                  <MessageSquare size={14} className="text-[#444c54] mt-0.5 flex-shrink-0" />
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={14} className="text-[#444c54] flex-shrink-0" />
                   <div>
                     <span className="text-sm text-[#444c54] font-medium">新文艺：</span>
                     <span className="text-sm text-[#444c54]" dangerouslySetInnerHTML={{ __html: replaceEmojis(message.reply) }} />
