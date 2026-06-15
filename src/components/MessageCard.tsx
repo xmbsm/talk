@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, Trash2, Send, MapPin, Clock, Image as ImageIcon } from 'lucide-react'
+import { Trash2, Send, MapPin, Clock, Image as ImageIcon } from 'lucide-react'
 import { type Message, messagesApi } from '@/lib/api'
 import { replaceEmojis } from '@/lib/emojis'
 import { useStore } from '@/store'
@@ -136,16 +136,19 @@ export default function MessageCard({ message, floor, onRefresh }: Props) {
             {/* Admin Reply */}
             {message.reply && (
               <div className="mt-3 bg-[#f5f5f5] rounded-[10px] p-3">
-                <div className="flex items-center gap-2">
-                  <MessageSquare size={14} className="text-[#444c54] flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <img src="/images/reply_icon.svg" alt="" className="w-[14px] h-[14px] flex-shrink-0 opacity-25 mt-1.5" />
                   <div>
                     <span className="text-sm text-[#444c54] font-medium">新文艺：</span>
                     <span className="text-sm text-[#444c54]" dangerouslySetInnerHTML={{ __html: replaceEmojis(message.reply) }} />
                     {message.replytime && (
-                      <span className="text-xs text-muted ml-2">{formatTime(message.replytime)}</span>
+                      <span className="text-xs text-muted ml-2 hidden sm:inline">{formatTime(message.replytime)}</span>
                     )}
                   </div>
                 </div>
+                {message.replytime && (
+                  <div className="text-xs text-muted sm:hidden mt-1 pl-[22px]">{formatTime(message.replytime)}</div>
+                )}
               </div>
             )}
 
@@ -192,7 +195,6 @@ export default function MessageCard({ message, floor, onRefresh }: Props) {
                     onClick={() => setShowReply(!showReply)}
                     className="flex items-center gap-0.5 text-muted hover:text-accent transition-all duration-300"
                   >
-                    <MessageSquare size={12} />
                     回复
                   </button>
                   <button
