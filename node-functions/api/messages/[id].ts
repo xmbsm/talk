@@ -3,7 +3,7 @@
  */
 import { db, json, requireAuth, toObjectId } from '../../_lib.js'
 
-export async function onRequest(context: { params: { id: string }; request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'DELETE') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }

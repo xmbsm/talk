@@ -3,7 +3,7 @@
  */
 import { db, json, requireAuth } from '../../_lib.js'
 
-export async function onRequest(context: { request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'GET') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -12,7 +12,10 @@ export async function onRequest(context: { request: Request }) {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
 
-    const admin = await (await db()).collection('Admin').findOne({ username: auth.username }, { projection: { username: 1 } })
+    const admin = await (await db()).collection('Admin').findOne(
+      { username: auth.username },
+      { projection: { username: 1 } }
+    )
     if (!admin) {
       return json({ success: false, error: '管理员不存在' }, 404)
     }

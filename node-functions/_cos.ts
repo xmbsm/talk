@@ -10,12 +10,7 @@ const Region = process.env.COS_REGION || ''
 
 const cos = new COS({ SecretId, SecretKey })
 
-export interface UploadResult {
-  filename: string
-  url: string
-}
-
-export async function uploadToCos(filename: string, buffer: Buffer): Promise<UploadResult> {
+export async function uploadToCos(filename, buffer) {
   return new Promise((resolve, reject) => {
     cos.putObject(
       {
@@ -33,7 +28,7 @@ export async function uploadToCos(filename: string, buffer: Buffer): Promise<Upl
   })
 }
 
-export async function deleteFromCos(filename: string): Promise<void> {
+export async function deleteFromCos(filename) {
   return new Promise((resolve, reject) => {
     cos.deleteObject(
       {

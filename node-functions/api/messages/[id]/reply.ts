@@ -3,7 +3,7 @@
  */
 import { db, json, requireAuth, parseBody, toObjectId } from '../../../_lib.js'
 
-export async function onRequest(context: { params: { id: string }; request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'PUT') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -13,7 +13,7 @@ export async function onRequest(context: { params: { id: string }; request: Requ
     if (auth instanceof Response) return auth
 
     const { id } = context.params
-    const { content } = await parseBody<{ content: string }>(context.request)
+    const { content } = await parseBody(context.request)
 
     if (!content) {
       return json({ success: false, error: '回复内容不能为空' }, 400)

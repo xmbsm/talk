@@ -6,17 +6,17 @@ import { uploadToCos as cosUpload } from '../../_cos.js'
 
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
 
-function generateFilename(ext: string): string {
+function generateFilename(ext) {
   const timestamp = Date.now()
   const random = Math.floor(Math.random() * 10000)
   return `uploads/${timestamp}-${random}${ext}`
 }
 
-function getExtension(filename: string): string {
+function getExtension(filename) {
   return filename.split('.').pop()?.toLowerCase()?.replace(/[^a-z]/g, '') || 'jpg'
 }
 
-export async function onRequest(context: { request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'POST') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -26,7 +26,7 @@ export async function onRequest(context: { request: Request }) {
     if (auth instanceof Response) return auth
 
     const formData = await context.request.formData()
-    const file = formData.get('file') as File | null
+    const file = formData.get('file')
 
     if (!file) {
       return json({ success: false, error: '请选择要上传的图片' }, 400)

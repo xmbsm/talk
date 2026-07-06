@@ -4,7 +4,7 @@
 import { json, requireAuth } from '../../_lib.js'
 import { deleteFromCos } from '../../_cos.js'
 
-export async function onRequest(context: { params: { filename: string }; request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'DELETE') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -17,7 +17,7 @@ export async function onRequest(context: { params: { filename: string }; request
 
     try {
       await deleteFromCos(filename)
-    } catch {
+    } catch (e) {
       // 删除失败不影响主流程
     }
 

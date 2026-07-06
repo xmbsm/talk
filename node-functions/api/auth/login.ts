@@ -4,13 +4,13 @@
 import bcrypt from 'bcryptjs'
 import { db, json, generateToken, parseBody } from '../../_lib.js'
 
-export async function onRequest(context: { request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'POST') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
 
   try {
-    const { username, password } = await parseBody<{ username: string; password: string }>(context.request)
+    const { username, password } = await parseBody(context.request)
 
     if (!username || !password) {
       return json({ success: false, error: '用户名和密码不能为空' }, 400)

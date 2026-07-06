@@ -4,7 +4,7 @@
 import bcrypt from 'bcryptjs'
 import { db, json, requireAuth, parseBody } from '../../_lib.js'
 
-export async function onRequest(context: { request: Request }) {
+export async function onRequest(context) {
   if (context.request.method !== 'PUT') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
@@ -13,7 +13,7 @@ export async function onRequest(context: { request: Request }) {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
 
-    const { oldPassword, newPassword } = await parseBody<{ oldPassword: string; newPassword: string }>(context.request)
+    const { oldPassword, newPassword } = await parseBody(context.request)
 
     if (!oldPassword || !newPassword) {
       return json({ success: false, error: '旧密码和新密码不能为空' }, 400)
@@ -34,7 +34,10 @@ export async function onRequest(context: { request: Request }) {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await (await db()).collection('Admin').updateOne({ username: auth.username }, { $set: { password: hashedPassword } })
+    await (await db()).collection('Admin').updateOne(
+      { username: auth.username },
+      { $set: { password: hashedPassword } }
+    )
 
     return json({ success: true, message: '密码修改成功' })
   } catch (error) {

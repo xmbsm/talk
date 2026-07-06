@@ -4,7 +4,7 @@
  */
 import { db, json, parseBody, getClientIp } from '../../_lib.js'
 
-async function handleGet(request: Request) {
+async function handleGet(request) {
   try {
     const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1') || 1
@@ -12,7 +12,7 @@ async function handleGet(request: Request) {
     const skip = (page - 1) * pageSize
     const so = url.searchParams.get('so')
 
-    const query: Record<string, unknown> = {}
+    const query = {}
     if (so) {
       query.$or = [
         { username: { $regex: so, $options: 'i' } },
@@ -27,7 +27,7 @@ async function handleGet(request: Request) {
       .limit(pageSize)
       .toArray()
 
-    const messages = rawMessages.map((msg: any) => ({
+    const messages = rawMessages.map((msg) => ({
       id: msg._id.toString(),
       username: msg.username,
       content: msg.content,
@@ -56,9 +56,9 @@ async function handleGet(request: Request) {
   }
 }
 
-async function handlePost(request: Request) {
+async function handlePost(request) {
   try {
-    const { username, content, img } = await parseBody<{ username: string; content: string; img?: string }>(request)
+    const { username, content, img } = await parseBody(request)
 
     if (!username || !content) {
       return json({ success: false, error: '昵称和内容不能为空' }, 400)
@@ -80,11 +80,7 @@ async function handlePost(request: Request) {
       img: img || null,
       ip,
       createdAt: new Date(),
-      replies: [] as Array<{
-        username: string
-        content: string
-        createdAt: Date
-      }>,
+      replies: [],
     })
 
     const newMessage = await (await db()).collection('Message').findOne({ _id: result.insertedId })
@@ -113,7 +109,7 @@ async function handlePost(request: Request) {
   }
 }
 
-export async function onRequest(context: { request: Request }) {
+export async function onRequest(context) {
   const method = context.request.method
   if (method === 'GET') return handleGet(context.request)
   if (method === 'POST') return handlePost(context.request)
