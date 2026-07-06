@@ -9,14 +9,17 @@ function getExtension(filename: string): string {
   return filename.split('.').pop()?.toLowerCase()?.replace(/[^a-z]/g, '') || ''
 }
 
-export async function onRequestPost(context: { request: Request }) {
+export async function onRequest(context: { request: Request }) {
+  if (context.request.method !== 'POST') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     const { url: imageUrl } = await parseBody<{ url: string }>(context.request)
     if (!imageUrl || !imageUrl.trim()) {
       return json({ success: false, error: '请提供图片 URL' }, 400)
     }
 
-    // 验证 URL 格式
     try {
       const parsedUrl = new URL(imageUrl)
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
@@ -26,7 +29,6 @@ export async function onRequestPost(context: { request: Request }) {
       return json({ success: false, error: 'URL 格式无效' }, 400)
     }
 
-    // 验证扩展名（无扩展名也允许，仅做提示）
     const urlExt = getExtension(imageUrl)
 
     return json({

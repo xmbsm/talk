@@ -4,9 +4,9 @@
  */
 import { db, json, parseBody, getClientIp } from '../../_lib.js'
 
-export async function onRequestGet(context: { request: Request }) {
+async function handleGet(request: Request) {
   try {
-    const url = new URL(context.request.url)
+    const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1') || 1
     const pageSize = 20
     const skip = (page - 1) * pageSize
@@ -27,7 +27,6 @@ export async function onRequestGet(context: { request: Request }) {
       .limit(pageSize)
       .toArray()
 
-    // 将 _id 映射为 id，createdAt 映射为 posttime，兼容前端类型
     const messages = rawMessages.map((msg: any) => ({
       id: msg._id.toString(),
       username: msg.username,
@@ -38,7 +37,7 @@ export async function onRequestGet(context: { request: Request }) {
       dream: msg.dream || null,
       userImg: msg.userImg || null,
       reply: msg.replies?.[0]?.content || msg.reply || null,
-      replytime: msg.replies?.[0]?.createdAt?.toISOString() || msg.replytime || null,
+      replytime: msg.replies?.[0]?.createdAt?.toISOString?.() || msg.replytime || null,
       posttime: msg.createdAt?.toISOString?.() || msg.createdAt || new Date().toISOString(),
     }))
 
@@ -57,9 +56,9 @@ export async function onRequestGet(context: { request: Request }) {
   }
 }
 
-export async function onRequestPost(context: { request: Request }) {
+async function handlePost(request: Request) {
   try {
-    const { username, content, img } = await parseBody<{ username: string; content: string; img?: string }>(context.request)
+    const { username, content, img } = await parseBody<{ username: string; content: string; img?: string }>(request)
 
     if (!username || !content) {
       return json({ success: false, error: '昵称和内容不能为空' }, 400)
@@ -73,7 +72,7 @@ export async function onRequestPost(context: { request: Request }) {
       return json({ success: false, error: '内容长度不能超过500个字符' }, 400)
     }
 
-    const ip = getClientIp(context.request)
+    const ip = getClientIp(request)
 
     const result = await (await db()).collection('Message').insertOne({
       username,
@@ -90,7 +89,6 @@ export async function onRequestPost(context: { request: Request }) {
 
     const newMessage = await (await db()).collection('Message').findOne({ _id: result.insertedId })
 
-    // 映射为前端兼容格式
     const mappedMessage = newMessage ? {
       id: newMessage._id.toString(),
       username: newMessage.username,
@@ -101,7 +99,7 @@ export async function onRequestPost(context: { request: Request }) {
       dream: newMessage.dream || null,
       userImg: newMessage.userImg || null,
       reply: newMessage.replies?.[0]?.content || newMessage.reply || null,
-      replytime: newMessage.replies?.[0]?.createdAt?.toISOString() || newMessage.replytime || null,
+      replytime: newMessage.replies?.[0]?.createdAt?.toISOString?.() || newMessage.replytime || null,
       posttime: newMessage.createdAt?.toISOString?.() || newMessage.createdAt || new Date().toISOString(),
     } : null
 
@@ -113,4 +111,11 @@ export async function onRequestPost(context: { request: Request }) {
     console.error('发布留言失败:', error)
     return json({ success: false, error: '发布留言失败' }, 500)
   }
+}
+
+export async function onRequest(context: { request: Request }) {
+  const method = context.request.method
+  if (method === 'GET') return handleGet(context.request)
+  if (method === 'POST') return handlePost(context.request)
+  return json({ success: false, error: 'Method not allowed' }, 405)
 }

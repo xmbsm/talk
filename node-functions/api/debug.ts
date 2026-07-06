@@ -4,7 +4,7 @@
  */
 import { db, json } from '../_lib.js'
 
-export async function onRequestGet() {
+export async function onRequest(context: { request: Request }) {
   const results: Record<string, unknown> = {}
 
   // 1. 检查环境变量

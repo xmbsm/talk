@@ -3,7 +3,11 @@
  */
 import { db, json, requireAuth, toObjectId } from '../../_lib.js'
 
-export async function onRequestDelete(context: { params: { id: string }; request: Request }) {
+export async function onRequest(context: { params: { id: string }; request: Request }) {
+  if (context.request.method !== 'DELETE') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth

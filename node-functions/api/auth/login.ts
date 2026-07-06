@@ -4,7 +4,11 @@
 import bcrypt from 'bcryptjs'
 import { db, json, generateToken, parseBody } from '../../_lib.js'
 
-export async function onRequestPost(context: { request: Request }) {
+export async function onRequest(context: { request: Request }) {
+  if (context.request.method !== 'POST') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     const { username, password } = await parseBody<{ username: string; password: string }>(context.request)
 

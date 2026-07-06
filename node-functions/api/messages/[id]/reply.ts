@@ -1,9 +1,13 @@
 /**
- * POST /api/messages/[id]/reply - 回复留言
+ * PUT /api/messages/[id]/reply - 回复留言
  */
 import { db, json, requireAuth, parseBody, toObjectId } from '../../../_lib.js'
 
-export async function onRequestPut(context: { params: { id: string }; request: Request }) {
+export async function onRequest(context: { params: { id: string }; request: Request }) {
+  if (context.request.method !== 'PUT') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
@@ -38,7 +42,6 @@ export async function onRequestPut(context: { params: { id: string }; request: R
 
     const rawMessage = await (await db()).collection('Message').findOne({ _id: toObjectId(id) })
 
-    // 映射为前端兼容格式
     const message = rawMessage ? {
       id: rawMessage._id.toString(),
       username: rawMessage.username,
@@ -49,7 +52,7 @@ export async function onRequestPut(context: { params: { id: string }; request: R
       dream: rawMessage.dream || null,
       userImg: rawMessage.userImg || null,
       reply: rawMessage.replies?.[0]?.content || rawMessage.reply || null,
-      replytime: rawMessage.replies?.[0]?.createdAt?.toISOString() || rawMessage.replytime || null,
+      replytime: rawMessage.replies?.[0]?.createdAt?.toISOString?.() || rawMessage.replytime || null,
       posttime: rawMessage.createdAt?.toISOString?.() || rawMessage.createdAt || new Date().toISOString(),
     } : null
 

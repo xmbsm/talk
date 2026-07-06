@@ -16,7 +16,11 @@ function getExtension(filename: string): string {
   return filename.split('.').pop()?.toLowerCase()?.replace(/[^a-z]/g, '') || 'jpg'
 }
 
-export async function onRequestPost(context: { request: Request }) {
+export async function onRequest(context: { request: Request }) {
+  if (context.request.method !== 'POST') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth

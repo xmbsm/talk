@@ -6,7 +6,11 @@
 import { db, json } from '../_lib.js'
 import bcrypt from 'bcryptjs'
 
-export async function onRequestPost(context: { request: Request }) {
+export async function onRequest(context: { request: Request }) {
+  if (context.request.method !== 'POST') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     let username = 'admin'
     let password = 'admin123'

@@ -3,6 +3,6 @@
  */
 import { json } from '../_lib.js'
 
-export async function onRequestGet() {
+export async function onRequest(context: { request: Request }) {
   return json({ success: true, message: 'ok' })
 }

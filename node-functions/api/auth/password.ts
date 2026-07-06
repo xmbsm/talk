@@ -4,7 +4,11 @@
 import bcrypt from 'bcryptjs'
 import { db, json, requireAuth, parseBody } from '../../_lib.js'
 
-export async function onRequestPut(context: { request: Request }) {
+export async function onRequest(context: { request: Request }) {
+  if (context.request.method !== 'PUT') {
+    return json({ success: false, error: 'Method not allowed' }, 405)
+  }
+
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
