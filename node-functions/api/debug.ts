@@ -1,37 +1,16 @@
 /**
- * GET /api/debug - 诊断接口，排查数据库连接问题
- * 部署后访问一次，排查完毕后删除此文件
+ * GET /api/debug - 最小化诊断接口（不依赖任何外部模块）
  */
-import { db, json } from '../_lib.js'
-
 export async function onRequest(context: { request: Request }) {
-  const results: Record<string, unknown> = {}
-
-  // 1. 检查环境变量
-  results.env = {
-    DATABASE_URL_set: !!process.env.DATABASE_URL,
-    DATABASE_URL_prefix: process.env.DATABASE_URL
-      ? process.env.DATABASE_URL.replace(/:([^@]+)@/, ':****@')
-      : 'NOT SET',
-    JWT_SECRET_set: !!process.env.JWT_SECRET,
-    NODE_ENV: process.env.NODE_ENV || 'not set',
-  }
-
-  // 2. 测试数据库连接
-  try {
-    const adminCount = await (await db()).collection('Admin').countDocuments()
-    const messageCount = await (await db()).collection('Message').countDocuments()
-    results.database = {
-      connected: true,
-      adminCount,
-      messageCount,
-    }
-  } catch (error: unknown) {
-    results.database = {
-      connected: false,
-      error: error instanceof Error ? error.message : String(error),
-    }
-  }
-
-  return json(results)
+  return new Response(JSON.stringify({
+    success: true,
+    message: 'debug ok - no external deps',
+    method: context.request.method,
+    url: context.request.url,
+    env_DATABASE_URL: !!process.env.DATABASE_URL,
+    env_JWT_SECRET: !!process.env.JWT_SECRET,
+  }), {
+    status: 200,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  })
 }
