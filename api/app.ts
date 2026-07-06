@@ -8,8 +8,8 @@ import express, {
   type NextFunction,
 } from 'express'
 import cors from 'cors'
-import path from 'path'
-import dotenv from 'dotenv'
+import path, { resolve } from 'path'
+import { config as dotenvConfig } from 'dotenv'
 import { fileURLToPath } from 'url'
 import authRoutes from './routes/auth.js'
 import messageRoutes from './routes/messages.js'
@@ -19,8 +19,9 @@ import uploadRoutes from './routes/upload.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// load env
-dotenv.config()
+// load env (优先 .env.local，回退 .env)
+dotenvConfig({ path: resolve(process.cwd(), '.env.local') })
+dotenvConfig({ path: resolve(process.cwd(), '.env') })
 
 const app: express.Application = express()
 
