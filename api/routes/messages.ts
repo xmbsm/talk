@@ -1,48 +1,51 @@
 import { Router, type Request, type Response } from 'express'
-import prisma from '../lib/prisma.js'
+import db from '../lib/prisma.js'
 import { authMiddleware, type AuthRequest } from '../lib/auth.js'
+import { ObjectId } from 'mongodb'
 
 const router = Router()
 
-/**
- * GET /api/messages - 留言列表（分页 + 搜索）
- */
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1)
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50))
     const so = (req.query.so as string) || ''
 
-    const where = so
-      ? {
-          OR: [
-            { username: { contains: so } },
-            { content: { contains: so } },
-            { reply: { contains: so } },
-          ],
-        }
-      : {}
+    const offset = (page - 1) * limit
+
+    let query = {}
+    if (so) {
+      query = {
+        $or: [
+          { username: { $regex: so, $options: 'i' } },
+          { content: { $regex: so, $options: 'i' } },
+          { reply: { $regex: so, $options: 'i' } },
+        ],
+      }
+    }
 
     const [data, total] = await Promise.all([
-      prisma.message.findMany({
-        where,
-        orderBy: { id: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.message.count({ where }),
+      db.collection('Message')
+        .find(query)
+        .sort({ _id: -1 })
+        .skip(offset)
+        .limit(limit)
+        .toArray(),
+      db.collection('Message').countDocuments(query),
     ])
 
-    res.json({ success: true, data, total, page, limit })
+    const formattedData = data.map((item) => ({
+      ...item,
+      id: item._id?.toString() || '',
+    }))
+
+    res.json({ success: true, data: formattedData, total, page, limit })
   } catch (error) {
     console.error('获取留言列表失败:', error)
     res.status(500).json({ success: false, error: '获取留言列表失败' })
   }
 })
 
-/**
- * POST /api/messages - 创建留言
- */
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, content, img } = req.body
@@ -56,19 +59,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return
     }
 
-    // 清理 HTML 标签
     const sanitized = content.replace(/<[^>]*>/g, '')
 
-    // 拒绝包含链接的内容（防垃圾）
     if (/https?:\/\//i.test(sanitized)) {
       res.status(400).json({ success: false, error: '内容不能包含链接' })
       return
     }
 
-    // 获取 IP
     const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || '127.0.0.1'
 
-    // 获取 IP 地理位置
     let location = ''
     try {
       const resp = await fetch(
@@ -85,42 +84,52 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       // IP 定位失败不影响留言
     }
 
-    const message = await prisma.message.create({
-      data: {
-        username: username.trim(),
-        content: sanitized.trim(),
-        img: img || '',
-        dream: '',
-        ip,
-        ipLocation: location,
-      },
+    const result = await db.collection('Message').insertOne({
+      username: username.trim(),
+      content: sanitized.trim(),
+      img: img || '',
+      dream: '',
+      ip,
+      ipLocation: location,
+      posttime: new Date(),
     })
 
-    res.status(201).json({ success: true, data: message })
+    const inserted = await db.collection('Message').findOne({ _id: result.insertedId })
+    const formatted = {
+      ...inserted,
+      id: inserted?._id?.toString() || '',
+    }
+
+    res.status(201).json({ success: true, data: formatted })
   } catch (error) {
     console.error('创建留言失败:', error)
     res.status(500).json({ success: false, error: '创建留言失败' })
   }
 })
 
-/**
- * DELETE /api/messages/:id - 删除留言（需认证）
- */
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = Number(req.params.id)
-    if (isNaN(id)) {
+    const id = req.params.id
+    if (!id) {
       res.status(400).json({ success: false, error: '无效的 ID' })
       return
     }
 
-    const existing = await prisma.message.findUnique({ where: { id } })
+    let objectId
+    try {
+      objectId = new ObjectId(id)
+    } catch {
+      res.status(400).json({ success: false, error: '无效的 ID' })
+      return
+    }
+
+    const existing = await db.collection('Message').findOne({ _id: objectId })
     if (!existing) {
       res.status(404).json({ success: false, error: '留言不存在' })
       return
     }
 
-    await prisma.message.delete({ where: { id } })
+    await db.collection('Message').deleteOne({ _id: objectId })
     res.json({ success: true, message: '删除成功' })
   } catch (error) {
     console.error('删除留言失败:', error)
@@ -128,13 +137,18 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response): P
   }
 })
 
-/**
- * PUT /api/messages/:id/reply - 回复留言（需认证）
- */
 router.put('/:id/reply', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = Number(req.params.id)
-    if (isNaN(id)) {
+    const id = req.params.id
+    if (!id) {
+      res.status(400).json({ success: false, error: '无效的 ID' })
+      return
+    }
+
+    let objectId
+    try {
+      objectId = new ObjectId(id)
+    } catch {
       res.status(400).json({ success: false, error: '无效的 ID' })
       return
     }
@@ -145,21 +159,24 @@ router.put('/:id/reply', authMiddleware, async (req: AuthRequest, res: Response)
       return
     }
 
-    const existing = await prisma.message.findUnique({ where: { id } })
+    const existing = await db.collection('Message').findOne({ _id: objectId })
     if (!existing) {
       res.status(404).json({ success: false, error: '留言不存在' })
       return
     }
 
-    const message = await prisma.message.update({
-      where: { id },
-      data: {
-        reply: reply.trim(),
-        replytime: new Date(),
-      },
-    })
+    const result = await db.collection('Message').findOneAndUpdate(
+      { _id: objectId },
+      { $set: { reply: reply.trim(), replytime: new Date() } },
+      { returnDocument: 'after' }
+    )
 
-    res.json({ success: true, data: message })
+    const formatted = {
+      ...result.value,
+      id: result.value?._id?.toString() || '',
+    }
+
+    res.json({ success: true, data: formatted })
   } catch (error) {
     console.error('回复留言失败:', error)
     res.status(500).json({ success: false, error: '回复留言失败' })

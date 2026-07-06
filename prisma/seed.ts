@@ -1,28 +1,34 @@
-import { PrismaClient } from '@prisma/client'
+import { MongoClient } from 'mongodb'
 import bcrypt from 'bcryptjs'
 
-const prisma = new PrismaClient()
-
 async function main() {
-  const hashedPassword = await bcrypt.hash('admin123', 10)
+  const uri = process.env.DATABASE_URL || 'mongodb://localhost:27017/talk'
+  const client = new MongoClient(uri)
 
-  await prisma.admin.upsert({
-    where: { username: 'admin' },
-    update: {},
-    create: {
-      username: 'admin',
-      password: hashedPassword,
-    },
-  })
+  try {
+    await client.connect()
+    const db = client.db()
 
-  console.log('Seed data created: admin / admin123')
+    const hashedPassword = await bcrypt.hash('admin123', 10)
+
+    await db.collection('Admin').updateOne(
+      { username: 'admin' },
+      { $set: { username: 'admin', password: hashedPassword, createdAt: new Date() } },
+      { upsert: true }
+    )
+
+    await db.collection('Admin').createIndex({ username: 1 }, { unique: true })
+    await db.collection('Message').createIndex({ posttime: -1 })
+    await db.collection('Message').createIndex({ username: 1 })
+
+    console.log('Seed data created: admin / admin123')
+  } finally {
+    await client.close()
+  }
 }
 
 main()
   .catch((e) => {
     console.error(e)
     process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
   })

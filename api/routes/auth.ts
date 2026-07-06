@@ -4,14 +4,11 @@
  */
 import { Router, type Response } from 'express'
 import bcrypt from 'bcryptjs'
-import prisma from '../lib/prisma.js'
+import db from '../lib/prisma.js'
 import { generateToken, authMiddleware, type AuthRequest } from '../lib/auth.js'
 
 const router = Router()
 
-/**
- * POST /api/auth/login - 管理员登录
- */
 router.post('/login', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body
@@ -21,7 +18,7 @@ router.post('/login', async (req: AuthRequest, res: Response): Promise<void> => 
       return
     }
 
-    const admin = await prisma.admin.findUnique({ where: { username } })
+    const admin = await db.collection('Admin').findOne({ username })
     if (!admin) {
       res.status(401).json({ success: false, error: '用户名或密码错误' })
       return
@@ -48,14 +45,11 @@ router.post('/login', async (req: AuthRequest, res: Response): Promise<void> => 
   }
 })
 
-/**
- * GET /api/auth/me - 获取当前管理员信息（需认证）
- */
 router.get('/me', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const username = req.admin!.username
 
-    const admin = await prisma.admin.findUnique({ where: { username } })
+    const admin = await db.collection('Admin').findOne({ username }, { projection: { username: 1 } })
     if (!admin) {
       res.status(404).json({ success: false, error: '管理员不存在' })
       return
@@ -73,9 +67,6 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response): Promi
   }
 })
 
-/**
- * PUT /api/auth/password - 修改密码（需认证）
- */
 router.put('/password', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { oldPassword, newPassword } = req.body
@@ -91,7 +82,7 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response):
       return
     }
 
-    const admin = await prisma.admin.findUnique({ where: { username } })
+    const admin = await db.collection('Admin').findOne({ username })
     if (!admin) {
       res.status(404).json({ success: false, error: '管理员不存在' })
       return
@@ -104,10 +95,7 @@ router.put('/password', authMiddleware, async (req: AuthRequest, res: Response):
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await prisma.admin.update({
-      where: { username },
-      data: { password: hashedPassword },
-    })
+    await db.collection('Admin').updateOne({ username }, { $set: { password: hashedPassword } })
 
     res.json({ success: true, message: '密码修改成功' })
   } catch (error) {

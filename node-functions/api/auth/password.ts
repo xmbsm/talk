@@ -2,7 +2,7 @@
  * PUT /api/auth/password - 修改密码
  */
 import bcrypt from 'bcryptjs'
-import { pool, json, requireAuth, parseBody } from '../../_lib.js'
+import { db, json, requireAuth, parseBody } from '../../_lib.js'
 
 export async function onRequestPut(context: { request: Request }) {
   try {
@@ -19,8 +19,7 @@ export async function onRequestPut(context: { request: Request }) {
       return json({ success: false, error: '新密码长度不能少于6位' }, 400)
     }
 
-    const result = await pool.query('SELECT * FROM "Admin" WHERE username = $1', [auth.username])
-    const admin = result.rows[0]
+    const admin = await db.collection('Admin').findOne({ username: auth.username })
     if (!admin) {
       return json({ success: false, error: '管理员不存在' }, 404)
     }
@@ -31,7 +30,7 @@ export async function onRequestPut(context: { request: Request }) {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await pool.query('UPDATE "Admin" SET password = $1 WHERE username = $2', [hashedPassword, auth.username])
+    await db.collection('Admin').updateOne({ username: auth.username }, { $set: { password: hashedPassword } })
 
     return json({ success: true, message: '密码修改成功' })
   } catch (error) {

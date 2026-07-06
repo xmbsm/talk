@@ -1,22 +1,21 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model Admin {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   username  String   @unique
   password  String
   createdAt DateTime @default(now())
 }
 
 model Message {
-  id         Int       @id @default(autoincrement())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   username   String
   content    String
   img        String?
@@ -33,7 +32,7 @@ model Message {
 }
 
 model Blacklist {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   ip        String
   createdAt DateTime @default(now())
 }

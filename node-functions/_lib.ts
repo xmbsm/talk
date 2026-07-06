@@ -1,21 +1,33 @@
 /**
  * EdgeOne Node Functions 共享工具库
- * 直接使用 pg 驱动，不依赖 Prisma 原生引擎
+ * 使用 MongoDB 驱动
  */
-import pg from 'pg'
+import { MongoClient, type Db, type ObjectId } from 'mongodb'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'xinwenyi-talk-secret-key'
 
-// pg 连接池单例（PgBouncer 兼容：禁用 prepared statements）
-const globalForPg = globalThis as unknown as { pool: pg.Pool }
-export const pool: pg.Pool = globalForPg.pool || new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  prepare: false,
-})
-if (process.env.NODE_ENV !== 'production') globalForPg.pool = pool
+const globalForMongo = globalThis as unknown as { client: MongoClient; db: Db }
 
-// JWT 工具
+export let db: Db
+
+async function connect(): Promise<void> {
+  if (globalForMongo.db) {
+    db = globalForMongo.db
+    return
+  }
+
+  const uri = process.env.DATABASE_URL || 'mongodb://localhost:27017/talk'
+  const client = new MongoClient(uri)
+  
+  await client.connect()
+  globalForMongo.client = client
+  globalForMongo.db = client.db()
+  db = globalForMongo.db
+}
+
+await connect()
+
 export function generateToken(username: string): string {
   return jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' })
 }
@@ -28,7 +40,6 @@ export function verifyToken(token: string): { username: string } | null {
   }
 }
 
-// 统一响应
 export function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -36,14 +47,12 @@ export function json(data: unknown, status = 200): Response {
   })
 }
 
-// 从请求中获取认证信息
 export function getAuth(request: Request): { username: string } | null {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return null
   return verifyToken(token)
 }
 
-// 要求认证
 export function requireAuth(request: Request): { username: string } | Response {
   const auth = getAuth(request)
   if (!auth) {
@@ -52,14 +61,16 @@ export function requireAuth(request: Request): { username: string } | Response {
   return auth
 }
 
-// 解析 JSON 请求体
 export async function parseBody<T = unknown>(request: Request): Promise<T> {
   return request.json() as Promise<T>
 }
 
-// 获取客户端 IP
 export function getClientIp(request: Request): string {
   const xff = request.headers.get('x-forwarded-for')
   if (xff) return xff.split(',')[0].trim()
   return '127.0.0.1'
+}
+
+export function toObjectId(id: string): ObjectId {
+  return new ObjectId(id)
 }
