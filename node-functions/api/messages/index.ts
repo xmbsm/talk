@@ -1,110 +1,88 @@
 /**
- * /api/messages - 留言列表 + 创建留言
+ * GET /api/messages - 获取留言列表
+ * POST /api/messages - 发布留言
  */
-import { db, json, parseBody, getClientIp, toObjectId } from '../../_lib.js'
+import { db, json, parseBody, getClientIp } from '../../_lib.js'
 
-/**
- * GET /api/messages - 留言列表（分页 + 搜索）
- */
 export async function onRequestGet(context: { request: Request }) {
   try {
     const url = new URL(context.request.url)
-    const page = Math.max(1, Number(url.searchParams.get('page')) || 1)
-    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get('limit')) || 50))
-    const so = url.searchParams.get('so') || ''
+    const page = parseInt(url.searchParams.get('page') || '1') || 1
+    const pageSize = 20
+    const skip = (page - 1) * pageSize
+    const so = url.searchParams.get('so')
 
-    const offset = (page - 1) * limit
-
-    let query = {}
+    const query: Record<string, unknown> = {}
     if (so) {
-      query = {
-        $or: [
-          { username: { $regex: so, $options: 'i' } },
-          { content: { $regex: so, $options: 'i' } },
-          { reply: { $regex: so, $options: 'i' } },
-        ],
-      }
+      query.$or = [
+        { username: { $regex: so, $options: 'i' } },
+        { content: { $regex: so, $options: 'i' } },
+      ]
     }
 
-    const [data, total] = await Promise.all([
-      db.collection('Message')
-        .find(query)
-        .sort({ _id: -1 })
-        .skip(offset)
-        .limit(limit)
-        .toArray(),
-      db.collection('Message').countDocuments(query),
-    ])
+    const messages = await (await db()).collection('Message')
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .toArray()
 
-    const formattedData = data.map((item) => ({
-      ...item,
-      id: item._id?.toString() || '',
-    }))
+    const total = await (await db()).collection('Message').countDocuments(query)
 
-    return json({ success: true, data: formattedData, total, page, limit })
+    return json({
+      success: true,
+      data: messages,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        pages: Math.ceil(total / pageSize),
+      },
+    })
   } catch (error) {
     console.error('获取留言列表失败:', error)
     return json({ success: false, error: '获取留言列表失败' }, 500)
   }
 }
 
-/**
- * POST /api/messages - 创建留言
- */
 export async function onRequestPost(context: { request: Request }) {
   try {
-    const { username, content, img } = await parseBody<{ username: string; content: string; img?: string }>(context.request)
+    const { username, content } = await parseBody<{ username: string; content: string }>(context.request)
 
-    if (!username || !username.trim()) {
-      return json({ success: false, error: '用户名不能为空' }, 400)
-    }
-    if (!content || !content.trim()) {
-      return json({ success: false, error: '内容不能为空' }, 400)
+    if (!username || !content) {
+      return json({ success: false, error: '昵称和内容不能为空' }, 400)
     }
 
-    const sanitized = content.replace(/<[^>]*>/g, '')
+    if (username.length > 20) {
+      return json({ success: false, error: '昵称长度不能超过20个字符' }, 400)
+    }
 
-    if (/https?:\/\//i.test(sanitized)) {
-      return json({ success: false, error: '内容不能包含链接' }, 400)
+    if (content.length > 500) {
+      return json({ success: false, error: '内容长度不能超过500个字符' }, 400)
     }
 
     const ip = getClientIp(context.request)
 
-    let location = ''
-    try {
-      const resp = await fetch(
-        `http://ip-api.com/json/${ip}?lang=zh-CN&fields=regionName,city`,
-        { signal: AbortSignal.timeout(3000) }
-      )
-      if (resp.ok) {
-        const data = (await resp.json()) as { regionName?: string; city?: string }
-        if (data.regionName || data.city) {
-          location = `${data.regionName || ''} ${data.city || ''}`.trim()
-        }
-      }
-    } catch {
-      // IP 定位失败不影响留言
-    }
-
-    const result = await db.collection('Message').insertOne({
-      username: username.trim(),
-      content: sanitized.trim(),
-      img: img || '',
-      dream: '',
+    const result = await (await db()).collection('Message').insertOne({
+      username,
+      content,
       ip,
-      ipLocation: location,
-      posttime: new Date(),
+      createdAt: new Date(),
+      replies: [] as Array<{
+        username: string
+        content: string
+        createdAt: Date
+      }>,
     })
 
-    const inserted = await db.collection('Message').findOne({ _id: result.insertedId })
-    const formatted = {
-      ...inserted,
-      id: inserted?._id?.toString() || '',
-    }
+    const newMessage = await (await db()).collection('Message').findOne({ _id: result.insertedId })
 
-    return json({ success: true, data: formatted }, 201)
+    return json({
+      success: true,
+      data: newMessage,
+    })
   } catch (error) {
-    console.error('创建留言失败:', error)
-    return json({ success: false, error: '创建留言失败' }, 500)
+    console.error('发布留言失败:', error)
+    return json({ success: false, error: '发布留言失败' }, 500)
   }
 }

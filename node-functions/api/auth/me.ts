@@ -8,7 +8,7 @@ export async function onRequestGet(context: { request: Request }) {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
 
-    const admin = await db.collection('Admin').findOne({ username: auth.username }, { projection: { username: 1 } })
+    const admin = await (await db()).collection('Admin').findOne({ username: auth.username }, { projection: { username: 1 } })
     if (!admin) {
       return json({ success: false, error: '管理员不存在' }, 404)
     }

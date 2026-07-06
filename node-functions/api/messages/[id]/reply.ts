@@ -1,47 +1,47 @@
 /**
- * PUT /api/messages/[id]/reply - 回复留言（需认证）
+ * POST /api/messages/[id]/reply - 回复留言
  */
 import { db, json, requireAuth, parseBody, toObjectId } from '../../../_lib.js'
 
-export async function onRequestPut(context: { request: Request; params: { id: string } }) {
+export async function onRequestPost(context: { params: { id: string }; request: Request }) {
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
 
-    const id = context.params.id
-    if (!id) {
-      return json({ success: false, error: '无效的 ID' }, 400)
-    }
+    const { id } = context.params
+    const { content } = await parseBody<{ content: string }>(context.request)
 
-    let objectId
-    try {
-      objectId = toObjectId(id)
-    } catch {
-      return json({ success: false, error: '无效的 ID' }, 400)
-    }
-
-    const { reply } = await parseBody<{ reply: string }>(context.request)
-    if (!reply || !reply.trim()) {
+    if (!content) {
       return json({ success: false, error: '回复内容不能为空' }, 400)
     }
 
-    const existing = await db.collection('Message').findOne({ _id: objectId })
-    if (!existing) {
+    if (content.length > 500) {
+      return json({ success: false, error: '回复内容长度不能超过500个字符' }, 400)
+    }
+
+    const result = await (await db()).collection('Message').updateOne(
+      { _id: toObjectId(id) },
+      {
+        $push: {
+          replies: {
+            username: auth.username,
+            content,
+            createdAt: new Date(),
+          },
+        },
+      }
+    )
+
+    if (result.modifiedCount === 0) {
       return json({ success: false, error: '留言不存在' }, 404)
     }
 
-    const result = await db.collection('Message').findOneAndUpdate(
-      { _id: objectId },
-      { $set: { reply: reply.trim(), replytime: new Date() } },
-      { returnDocument: 'after' }
-    )
+    const message = await (await db()).collection('Message').findOne({ _id: toObjectId(id) })
 
-    const formatted = {
-      ...result.value,
-      id: result.value?._id?.toString() || '',
-    }
-
-    return json({ success: true, data: formatted })
+    return json({
+      success: true,
+      data: message,
+    })
   } catch (error) {
     console.error('回复留言失败:', error)
     return json({ success: false, error: '回复留言失败' }, 500)

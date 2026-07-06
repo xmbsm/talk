@@ -2,7 +2,7 @@
  * GET /api/debug - 诊断接口，排查数据库连接问题
  * 部署后访问一次，排查完毕后删除此文件
  */
-import { pool, json } from '../_lib.js'
+import { db, json } from '../_lib.js'
 
 export async function onRequestGet() {
   const results: Record<string, unknown> = {}
@@ -19,12 +19,12 @@ export async function onRequestGet() {
 
   // 2. 测试数据库连接
   try {
-    const adminResult = await pool.query('SELECT COUNT(*)::int AS count FROM "Admin"')
-    const messageResult = await pool.query('SELECT COUNT(*)::int AS count FROM "Message"')
+    const adminCount = await (await db()).collection('Admin').countDocuments()
+    const messageCount = await (await db()).collection('Message').countDocuments()
     results.database = {
       connected: true,
-      adminCount: adminResult.rows[0].count,
-      messageCount: messageResult.rows[0].count,
+      adminCount,
+      messageCount,
     }
   } catch (error: unknown) {
     results.database = {

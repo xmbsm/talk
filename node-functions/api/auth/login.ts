@@ -12,7 +12,7 @@ export async function onRequestPost(context: { request: Request }) {
       return json({ success: false, error: '用户名和密码不能为空' }, 400)
     }
 
-    const admin = await db.collection('Admin').findOne({ username })
+    const admin = await (await db()).collection('Admin').findOne({ username })
     if (!admin) {
       return json({ success: false, error: '用户名或密码错误' }, 401)
     }

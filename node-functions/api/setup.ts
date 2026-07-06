@@ -1,12 +1,9 @@
 /**
  * POST /api/setup - 初始化管理员账号（仅首次部署使用）
- * 请先在 Supabase SQL Editor 中建表
- * 然后调用此接口创建管理员
- *
  * 请求体: { "username": "admin", "password": "your-password" }
  * 不传则默认 admin / admin123
  */
-import { pool, json } from '../_lib.js'
+import { db, json } from '../_lib.js'
 import bcrypt from 'bcryptjs'
 
 export async function onRequestPost(context: { request: Request }) {
@@ -26,16 +23,17 @@ export async function onRequestPost(context: { request: Request }) {
       return json({ success: false, error: '密码长度不能少于6位' }, 400)
     }
 
-    const existing = await pool.query('SELECT username FROM "Admin" WHERE username = $1', [username])
-    if (existing.rows.length > 0) {
+    const existing = await (await db()).collection('Admin').findOne({ username })
+    if (existing) {
       return json({ success: true, message: '管理员已存在，无需初始化' })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    await pool.query(
-      'INSERT INTO "Admin" (username, password, "createdAt") VALUES ($1, $2, NOW())',
-      [username, hashedPassword]
-    )
+    await (await db()).collection('Admin').insertOne({
+      username,
+      password: hashedPassword,
+      createdAt: new Date(),
+    })
 
     return json({
       success: true,

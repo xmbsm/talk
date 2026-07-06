@@ -1,32 +1,28 @@
 /**
  * EdgeOne Node Functions 共享工具库
- * 使用 MongoDB 驱动
+ * 使用 MongoDB 驱动（延迟初始化，避免顶层 await）
  */
 import { MongoClient, type Db, type ObjectId } from 'mongodb'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'xinwenyi-talk-secret-key'
 
-const globalForMongo = globalThis as unknown as { client: MongoClient; db: Db }
+let _db: Db | null = null
 
-export let db: Db
-
-async function connect(): Promise<void> {
-  if (globalForMongo.db) {
-    db = globalForMongo.db
-    return
-  }
+async function getDb(): Promise<Db> {
+  if (_db) return _db
 
   const uri = process.env.DATABASE_URL || 'mongodb://localhost:27017/talk'
   const client = new MongoClient(uri)
   
   await client.connect()
-  globalForMongo.client = client
-  globalForMongo.db = client.db()
-  db = globalForMongo.db
+  _db = client.db()
+  return _db
 }
 
-await connect()
+export async function db(): Promise<Db> {
+  return getDb()
+}
 
 export function generateToken(username: string): string {
   return jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' })

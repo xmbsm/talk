@@ -19,7 +19,7 @@ export async function onRequestPut(context: { request: Request }) {
       return json({ success: false, error: '新密码长度不能少于6位' }, 400)
     }
 
-    const admin = await db.collection('Admin').findOne({ username: auth.username })
+    const admin = await (await db()).collection('Admin').findOne({ username: auth.username })
     if (!admin) {
       return json({ success: false, error: '管理员不存在' }, 404)
     }
@@ -30,7 +30,7 @@ export async function onRequestPut(context: { request: Request }) {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10)
-    await db.collection('Admin').updateOne({ username: auth.username }, { $set: { password: hashedPassword } })
+    await (await db()).collection('Admin').updateOne({ username: auth.username }, { $set: { password: hashedPassword } })
 
     return json({ success: true, message: '密码修改成功' })
   } catch (error) {
