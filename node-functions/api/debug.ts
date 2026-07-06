@@ -1,12 +1,11 @@
 /**
- * GET /api/debug - 最小化诊断接口（不依赖任何外部模块）
+ * GET /api/debug - 诊断接口（不依赖任何外部模块）
  */
-export async function onRequest(context: { request: Request }) {
+export async function onRequest(context) {
   return new Response(JSON.stringify({
     success: true,
-    message: 'debug ok - no external deps',
+    message: 'debug ok',
     method: context.request.method,
-    url: context.request.url,
     env_DATABASE_URL: !!process.env.DATABASE_URL,
     env_JWT_SECRET: !!process.env.JWT_SECRET,
   }), {
