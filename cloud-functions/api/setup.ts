@@ -7,7 +7,7 @@ import { db, json } from '../_lib.js'
 import bcrypt from 'bcryptjs'
 
 export async function onRequest(context: { request: Request }) {
-  if (context.request.method !== 'POST') {
+  if (context.request.method !== 'POST' && context.request.method !== 'GET') {
     return json({ success: false, error: 'Method not allowed' }, 405)
   }
 
@@ -15,12 +15,14 @@ export async function onRequest(context: { request: Request }) {
     let username = 'admin'
     let password = 'admin123'
 
-    try {
-      const body = await context.request.json() as { username?: string; password?: string }
-      if (body.username) username = body.username
-      if (body.password) password = body.password
-    } catch {
-      // 无请求体，使用默认值
+    if (context.request.method === 'POST') {
+      try {
+        const body = await context.request.json() as { username?: string; password?: string }
+        if (body.username) username = body.username
+        if (body.password) password = body.password
+      } catch {
+        // 无请求体，使用默认值
+      }
     }
 
     if (password.length < 6) {
@@ -41,7 +43,7 @@ export async function onRequest(context: { request: Request }) {
 
     return json({
       success: true,
-      message: `初始化成功！管理员: ${username}`,
+      message: `初始化成功！管理员: ${username} / ${password}`,
     })
   } catch (error) {
     console.error('初始化失败:', error)
