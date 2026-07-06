@@ -1,5 +1,5 @@
 export interface Message {
-  id: number
+  id: string
   username: string
   content: string
   img: string | null
@@ -58,7 +58,7 @@ export const messagesApi = {
   },
 
   // 后端返回: { success }
-  delete: async (id: number): Promise<ApiResponse> => {
+  delete: async (id: string): Promise<ApiResponse> => {
     const res = await fetch(`${BASE}/messages/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
@@ -67,7 +67,7 @@ export const messagesApi = {
   },
 
   // 后端返回: { success, data: Message }
-  reply: async (id: number, reply: string): Promise<ApiResponse<Message>> => {
+  reply: async (id: string, reply: string): Promise<ApiResponse<Message>> => {
     const res = await fetch(`${BASE}/messages/${id}/reply`, {
       method: 'PUT',
       headers: getHeaders(),

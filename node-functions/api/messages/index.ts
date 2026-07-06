@@ -20,24 +20,36 @@ export async function onRequestGet(context: { request: Request }) {
       ]
     }
 
-    const messages = await (await db()).collection('Message')
+    const rawMessages = await (await db()).collection('Message')
       .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize)
       .toArray()
 
+    // 将 _id 映射为 id，createdAt 映射为 posttime，兼容前端类型
+    const messages = rawMessages.map((msg: any) => ({
+      id: msg._id.toString(),
+      username: msg.username,
+      content: msg.content,
+      img: msg.img || null,
+      ip: msg.ip || null,
+      ipLocation: msg.ipLocation || null,
+      dream: msg.dream || null,
+      userImg: msg.userImg || null,
+      reply: msg.replies?.[0]?.content || msg.reply || null,
+      replytime: msg.replies?.[0]?.createdAt?.toISOString() || msg.replytime || null,
+      posttime: msg.createdAt?.toISOString?.() || msg.createdAt || new Date().toISOString(),
+    }))
+
     const total = await (await db()).collection('Message').countDocuments(query)
 
     return json({
       success: true,
       data: messages,
-      pagination: {
-        page,
-        pageSize,
-        total,
-        pages: Math.ceil(total / pageSize),
-      },
+      total,
+      page,
+      limit: pageSize,
     })
   } catch (error) {
     console.error('获取留言列表失败:', error)
@@ -47,7 +59,7 @@ export async function onRequestGet(context: { request: Request }) {
 
 export async function onRequestPost(context: { request: Request }) {
   try {
-    const { username, content } = await parseBody<{ username: string; content: string }>(context.request)
+    const { username, content, img } = await parseBody<{ username: string; content: string; img?: string }>(context.request)
 
     if (!username || !content) {
       return json({ success: false, error: '昵称和内容不能为空' }, 400)
@@ -66,6 +78,7 @@ export async function onRequestPost(context: { request: Request }) {
     const result = await (await db()).collection('Message').insertOne({
       username,
       content,
+      img: img || null,
       ip,
       createdAt: new Date(),
       replies: [] as Array<{
@@ -77,9 +90,24 @@ export async function onRequestPost(context: { request: Request }) {
 
     const newMessage = await (await db()).collection('Message').findOne({ _id: result.insertedId })
 
+    // 映射为前端兼容格式
+    const mappedMessage = newMessage ? {
+      id: newMessage._id.toString(),
+      username: newMessage.username,
+      content: newMessage.content,
+      img: newMessage.img || null,
+      ip: newMessage.ip || null,
+      ipLocation: newMessage.ipLocation || null,
+      dream: newMessage.dream || null,
+      userImg: newMessage.userImg || null,
+      reply: newMessage.replies?.[0]?.content || newMessage.reply || null,
+      replytime: newMessage.replies?.[0]?.createdAt?.toISOString() || newMessage.replytime || null,
+      posttime: newMessage.createdAt?.toISOString?.() || newMessage.createdAt || new Date().toISOString(),
+    } : null
+
     return json({
       success: true,
-      data: newMessage,
+      data: mappedMessage,
     })
   } catch (error) {
     console.error('发布留言失败:', error)

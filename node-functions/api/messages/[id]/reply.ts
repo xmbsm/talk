@@ -3,7 +3,7 @@
  */
 import { db, json, requireAuth, parseBody, toObjectId } from '../../../_lib.js'
 
-export async function onRequestPost(context: { params: { id: string }; request: Request }) {
+export async function onRequestPut(context: { params: { id: string }; request: Request }) {
   try {
     const auth = requireAuth(context.request)
     if (auth instanceof Response) return auth
@@ -36,7 +36,22 @@ export async function onRequestPost(context: { params: { id: string }; request: 
       return json({ success: false, error: '留言不存在' }, 404)
     }
 
-    const message = await (await db()).collection('Message').findOne({ _id: toObjectId(id) })
+    const rawMessage = await (await db()).collection('Message').findOne({ _id: toObjectId(id) })
+
+    // 映射为前端兼容格式
+    const message = rawMessage ? {
+      id: rawMessage._id.toString(),
+      username: rawMessage.username,
+      content: rawMessage.content,
+      img: rawMessage.img || null,
+      ip: rawMessage.ip || null,
+      ipLocation: rawMessage.ipLocation || null,
+      dream: rawMessage.dream || null,
+      userImg: rawMessage.userImg || null,
+      reply: rawMessage.replies?.[0]?.content || rawMessage.reply || null,
+      replytime: rawMessage.replies?.[0]?.createdAt?.toISOString() || rawMessage.replytime || null,
+      posttime: rawMessage.createdAt?.toISOString?.() || rawMessage.createdAt || new Date().toISOString(),
+    } : null
 
     return json({
       success: true,
