@@ -1,4 +1,15 @@
 {
+  "cloudFunctions": {
+    "nodejs": {
+      "externalNodeModules": [
+        "mongodb",
+        "jsonwebtoken",
+        "bcryptjs",
+        "cos-nodejs-sdk-v5"
+      ],
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/api/*",
