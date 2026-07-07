@@ -135,4 +135,18 @@ export const authApi = {
     })
     return res.json()
   },
+
+  // 修改密码 - 后端返回: { success, message }
+  changePassword: async (oldPassword: string, newPassword: string): Promise<ApiResponse> => {
+    const res = await fetch(`${BASE}/auth/password`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ oldPassword, newPassword }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: '修改失败' }))
+      throw new Error(err.error || '修改失败')
+    }
+    return res.json()
+  },
 }

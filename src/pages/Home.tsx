@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import Navbar from '@/components/Navbar'
 import Announcement from '@/components/Announcement'
@@ -5,6 +6,7 @@ import MessageForm from '@/components/MessageForm'
 import MessageList from '@/components/MessageList'
 import Sidebar from '@/components/Sidebar'
 import BackToTop from '@/components/BackToTop'
+import ChangePassword from '@/components/ChangePassword'
 import { useStore } from '@/store'
 
 const recommendLinks = ['哈哈', '文艺社区', '一言', '摄影', '手机壁纸']
@@ -13,6 +15,13 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams()
   const so = searchParams.get('so') || ''
   const { token, clearAuth } = useStore()
+  const [showChangePwd, setShowChangePwd] = useState(false)
+
+  const handleChangePasswordSuccess = () => {
+    setShowChangePwd(false)
+    clearAuth()
+    alert('密码修改成功，请使用新密码重新登录')
+  }
 
   const handlePostSuccess = () => {
     window.dispatchEvent(new CustomEvent('message-posted'))
@@ -70,6 +79,12 @@ export default function Home() {
         </div>
       </main>
       <BackToTop />
+      {showChangePwd && (
+        <ChangePassword
+          onClose={() => setShowChangePwd(false)}
+          onSuccess={handleChangePasswordSuccess}
+        />
+      )}
       {/* Footer */}
       <footer className="py-8 text-center bg-[#FAFAFA]">
         <div className="max-w-[1600px] mx-auto px-6">
@@ -78,7 +93,10 @@ export default function Home() {
             <a href="https://xinwenyi.com/yiyan.php" target="_blank" rel="noopener noreferrer" className="text-sm text-muted hover:text-accent transition-all duration-300">一言</a>
             <a href="#" className="text-sm text-muted hover:text-accent transition-all duration-300">联系</a>
             {token ? (
-              <button onClick={clearAuth} className="text-sm text-muted hover:text-accent transition-all duration-300">退出管理</button>
+              <>
+                <button onClick={() => setShowChangePwd(true)} className="text-sm text-muted hover:text-accent transition-all duration-300">修改密码</button>
+                <button onClick={clearAuth} className="text-sm text-muted hover:text-accent transition-all duration-300">退出管理</button>
+              </>
             ) : (
               <Link to="/login" className="text-sm text-muted hover:text-accent transition-all duration-300">管理</Link>
             )}
